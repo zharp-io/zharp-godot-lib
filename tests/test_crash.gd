@@ -35,3 +35,19 @@ func test_windows_crash() -> void:
 
 func test_no_crash() -> void:
 	t.eq(Crash.parse(FileAccess.get_file_as_string("res://tests/fixtures/clean_exit.log")), {})
+
+
+## A Linux release export: the template has no crash handler, so the log just ends.
+func test_release_export_unclean_exit() -> void:
+	var text := FileAccess.get_file_as_string("res://tests/fixtures/release_no_crash_handler.log")
+	t.eq(Crash.parse(text), {})
+	var c := Crash.unclean_exit(text)
+	t.eq(c.type, "UncleanExit")
+	t.eq(c.mechanism, "unclean_exit")
+	t.eq(c.stacktrace, "UncleanExit: The game ended without shutting down after: Inventory corrupted\n[0] explode (res://shop/checkout.gd:40)\n[1] _ready (res://shop/checkout.gd:29)")
+
+
+func test_unclean_exit_without_an_error_says_so() -> void:
+	var c := Crash.unclean_exit(FileAccess.get_file_as_string("res://tests/fixtures/clean_exit.log") + "\nline\n".repeat(30))
+	t.eq(c.message, "The game ended without shutting down")
+	t.eq(c.frames, [])
