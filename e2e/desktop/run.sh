@@ -9,8 +9,9 @@ OUT=$E2E/out
 rm -rf "$OUT" "$E2E/game/addons" && mkdir -p "$OUT" && cp -r "$ROOT/addons" "$E2E/game/addons"
 echo '{"top":[1,2,3]}' > "$OUT/scores.json"
 python "$E2E/receiver.py" "$OUT" 4318 > "$OUT/receiver.log" 2>&1 &
-for i in $(seq 1 50); do curl -fsS -o /dev/null http://127.0.0.1:4318/scores.json && break; sleep 0.2; done
-echo "receiver: $(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:4318/scores.json)"
+START=$SECONDS
+for i in $(seq 1 600); do curl -fsS -o /dev/null http://127.0.0.1:4318/scores.json 2>/dev/null && break; sleep 0.2; done
+echo "receiver: $(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:4318/scores.json) after $((SECONDS - START)) s"
 rm -f "$OUT/requests.jsonl"
 export ZHARP_DEBUG=1
 case "$(uname -s)" in

@@ -70,4 +70,6 @@ jobs:
         if: always()
         with:
           name: e2e-${{ matrix.os }}
-          path: e2e/out
+          path: |
+            e2e/out
+            !e2e/out/build

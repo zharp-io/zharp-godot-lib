@@ -6,6 +6,7 @@ import gzip
 import http.server
 import json
 import os
+import socket
 import sys
 
 OUT = sys.argv[1] if len(sys.argv) > 1 else "out"
@@ -56,4 +57,17 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         pass
 
 
-http.server.ThreadingHTTPServer(("0.0.0.0", PORT), Handler).serve_forever()
+class Server(http.server.ThreadingHTTPServer):
+    # IPv4 and IPv6 both: "localhost" is ::1 first on macOS.
+    address_family = socket.AF_INET6
+
+    def server_bind(self):
+        self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+        super().server_bind()
+
+
+try:
+    server = Server(("::", PORT), Handler)
+except OSError:  # no IPv6 (some containers)
+    server = http.server.ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
+server.serve_forever()
