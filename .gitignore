@@ -1,0 +1,10 @@
+.godot/
+*.import
+/e2e/out/
+/e2e/build/
+/e2e/game/addons/
+/e2e/game/.godot/
+/e2e/csharp/addons/
+/e2e/csharp/.godot/
+bin/
+obj/

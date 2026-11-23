@@ -1,0 +1,5 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+hello
+ERROR: Node not found: "Nope" (relative to "/root/Main").
+   at: get_node (scene/main/node.cpp:1907)

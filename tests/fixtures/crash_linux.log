@@ -1,0 +1,37 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+track=true
+ERROR: boom from script
+   at: crash (core/core_bind.cpp:336)
+   GDScript backtrace (most recent call first):
+       [0] deeper_crash (res://main.gd:26)
+       [1] _ready (res://main.gd:20)
+
+================================================================
+handle_crash: Program crashed with signal 4
+Engine version: Godot Engine v4.5.1.stable.official (f62fdbde15035c5576dad93e586201f4d41ef0cb)
+Dumping the backtrace. Please include this when reporting the bug on: https://github.com/godotengine/godot/issues
+[1] /lib/x86_64-linux-gnu/libc.so.6(+0x3c050) [0x7f98e9289050] (??:0)
+[2] godot() [0x41e2dda] (??:0)
+[3] godot() [0xacc601] (??:0)
+[4] godot() [0x96cbee] (??:0)
+[5] godot() [0x47e9c69] (??:0)
+[6] godot() [0x457c93d] (??:0)
+[7] godot() [0xae6ecb] (??:0)
+[8] godot() [0x96cbee] (??:0)
+[9] godot() [0x285b1e6] (??:0)
+[10] godot() [0x47ab201] (??:0)
+[11] godot() [0x27d38b6] (??:0)
+[12] godot() [0x27d3864] (??:0)
+[13] godot() [0x2856b8f] (??:0)
+[14] godot() [0x42d28e] (??:0)
+[15] /lib/x86_64-linux-gnu/libc.so.6(+0x2724a) [0x7f98e927424a] (??:0)
+[16] /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x85) [0x7f98e9274305] (??:0)
+[17] godot() [0x46ca2a] (??:0)
+-- END OF C++ BACKTRACE --
+================================================================
+GDScript backtrace (most recent call first):
+    [0] deeper_crash (res://main.gd:26)
+    [1] _ready (res://main.gd:20)
+-- END OF GDSCRIPT BACKTRACE --
+================================================================

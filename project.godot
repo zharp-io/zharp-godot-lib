@@ -1,0 +1,7 @@
+; The repository as a Godot project, to run the unit tests and try the addon in the editor.
+; The Asset Library installs only addons/zharp.
+config_version=5
+
+[application]
+config/name="Zharp SDK"
+config/features=PackedStringArray("4.5")
