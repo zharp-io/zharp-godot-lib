@@ -36,15 +36,18 @@ func describe(event: Dictionary) -> Dictionary:
 	var code: String = event.get("code", "")
 	var rationale: String = event.get("rationale", "")
 	var text := rationale if rationale.strip_edges() != "" else code
+	# C#: the exception's own text, with its .NET frames, is the message. Godot adds a "C#
+	# backtrace" of its own glue (GD.PushError, ExceptionUtils.LogException): left out.
+	var dotnet := _parse_dotnet(text)
 	var frames: Array = []
 	for f in event.get("frames", []):
+		if not dotnet.is_empty() and f.get("language", "") == "C#":
+			continue
 		frames.append({"function": f.get("function", ""), "file": f.get("file", ""), "line": int(f.get("line", 0))})
 
 	var type := "Error"
 	var message := text.strip_edges()
 	var extra_lines := PackedStringArray()
-	# C#: the exception's own text, with its .NET frames, is the message.
-	var dotnet := _parse_dotnet(text)
 	if not dotnet.is_empty():
 		type = dotnet.type
 		message = dotnet.message

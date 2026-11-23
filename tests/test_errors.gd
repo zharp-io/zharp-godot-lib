@@ -41,7 +41,8 @@ func test_csharp_exception_text() -> void:
 	var d := Errors.new().describe({
 		"function": "void Godot.NativeInterop.ExceptionUtils.LogException(System.Exception)", "file": "/root/godot/modules/mono/glue/GodotSharp/GodotSharp/Core/NativeInterop/ExceptionUtils.cs", "line": 113,
 		"code": "System.InvalidOperationException: Cart is empty\n   at Shop.Cart.Checkout() in /game/Cart.cs:line 12\n   at Shop.Main._Ready() in /game/Main.cs:line 8\n   at Godot.Node.InvokeGodotClassMethod(godot_string_name& method, NativeVariantPtrArgs args, godot_variant& ret)",
-		"rationale": "", "error_type": 0, "frames": [],
+		"rationale": "", "error_type": 0,
+		"frames": [{"function": "void Godot.GD.PushError(string)", "file": "/root/godot/modules/mono/glue/GodotSharp/GodotSharp/Core/GD.cs", "line": 366, "language": "C#"}],
 	})
 	t.eq(d.type, "System.InvalidOperationException")
 	t.eq(d.message, "Cart is empty")
