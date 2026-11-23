@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  # Unit tests and the full e2e (debug runs, Linux release export, web export in headless
+  # Chromium) in the same Docker image as on a developer's machine.
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the test image (Godot 4.5.1, export templates, Chromium)
+        run: docker build -t zharp-godot-test:4.5.1 e2e/docker
+      - name: Unit tests
+        run: docker run --rm -v "$PWD:/work" -w /work zharp-godot-test:4.5.1 bash -c "godot --headless --import >/dev/null 2>&1; godot --headless -s res://tests/run.gd"
+      - name: End to end
+        run: mkdir -p results && docker run --rm -v "$PWD:/src:ro" -v "$PWD/results:/results" zharp-godot-test:4.5.1 bash /src/e2e/run.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linux-e2e
+          path: results
+
+  # The newest Godot too: the addon must keep working as the engine moves.
+  latest-godot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unit tests and the debug-run e2e on Godot 4.7.2
+        run: |
+          docker build -t zharp-godot-test:4.7.2 --build-arg GODOT=4.7.2 e2e/docker
+          docker run --rm -v "$PWD:/work" -w /work zharp-godot-test:4.7.2 bash -c "godot --headless --import >/dev/null 2>&1; godot --headless -s res://tests/run.gd"
+          docker run --rm -v "$PWD:/src:ro" zharp-godot-test:4.7.2 bash /src/e2e/run.sh
+
+  # Windows and macOS: release exports of the e2e game, run against the stand-in receiver.
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            editor: Godot_v4.5.1-stable_win64.exe.zip
+            preset: Windows
+          - os: macos-latest
+            editor: Godot_v4.5.1-stable_macos.universal.zip
+            preset: macOS
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Godot 4.5.1 and its export templates
+        run: bash e2e/desktop/setup.sh "${{ matrix.editor }}"
+      - name: Debug runs, then a release export
+        run: bash e2e/desktop/run.sh "${{ matrix.preset }}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-${{ matrix.os }}
+          path: e2e/out
