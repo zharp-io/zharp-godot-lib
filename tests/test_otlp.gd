@@ -44,3 +44,9 @@ func test_restart_keeps_a_recent_session() -> void:
 	var c := Session.new("user://test-session-2", func() -> float: return now + 60 + 31 * 60)
 	t.ok(c.id != a.id)
 	t.eq(c.device_id, a.device_id)
+
+
+func test_service_name_is_the_game_name_as_zharp_names_apps() -> void:
+	var Zharp = load("res://addons/zharp/zharp.gd")
+	t.eq(Zharp.service_name_for("Shop Quest"), "shop-quest")
+	t.eq(Zharp.service_name_for("  Dungeon_Crawler 2: Remix! "), "dungeon-crawler-2-remix")

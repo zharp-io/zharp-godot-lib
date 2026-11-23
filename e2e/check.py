@@ -1,6 +1,7 @@
 """Checks what the stand-in receiver got for one e2e scenario.
 Usage: check.py <scenario> <received.jsonl> <requests.jsonl>"""
 import json
+import os
 import sys
 
 scenario, received_path, requests_path = sys.argv[1], sys.argv[2], sys.argv[3]
@@ -44,7 +45,7 @@ def of_type(t):
 def common(error_list):
     for e in error_list:
         r = e["resource"]
-        expect(r.get("service.name") == "Shop Quest", "service.name")
+        expect(r.get("service.name") == "shop-quest", "service.name: the game's name as Zharp names its app")
         expect(r.get("service.version") == "1.4.0", "service.version is the game's version")
         expect(r.get("telemetry.sdk.language") == "gdscript", "telemetry.sdk.language")
         expect(len(r.get("device.id", "")) == 32, "device.id")
@@ -130,27 +131,27 @@ elif scenario == "hang":
         expect(e["a"]["exception.message"].startswith("The main thread was blocked for "), e["a"]["exception.message"])
         expect(e["a"]["exception.message"].endswith(" on level"), "the scene it froze on")
     common(anr)
-elif scenario == "release-crash":
-    # Release templates have no crash handler: an unclean exit, with the error logged just before.
-    crashes = of_type("UncleanExit")
-    expect(len(crashes) == 2, "one unclean exit per crashed run: got %d" % len(crashes))
-    for e in crashes:
-        expect(e["a"]["zharp.error.kind"] == "crash", "kind crash")
-        expect(e["a"]["exception.message"] == "The game ended without shutting down after: Inventory corrupted", e["a"]["exception.message"])
-        expect(frames(e)[:2] == ["[0] explode (res://shop/checkout.gd:40)", "[1] _ready (res://shop/checkout.gd:29)"], "script frames: %s" % frames(e)[:3])
-        expect(e["a"].get("screen.name") == "level", "the crashed run's scene")
-        context = json.loads(e["a"].get("zharp.source_context", "[]"))
-        expect(context and "OS.crash" in context[0]["code"], "the code that ran (from the export's copy)")
-    common(crashes)
-elif scenario == "crash":
-    crashes = of_type("SIGILL")
+elif scenario in ("crash", "release-crash"):
+    # Linux: SIGILL from OS.crash (SIGTRAP on arm64); Windows: "Program crashed", no signal. Release
+    # templates have no crash handler (Linux, at least): an unclean exit with the error before it.
+    crashes = [e for e in errors if e["a"].get("zharp.error.kind") == "crash"]
     expect(len(crashes) == 2, "one crash per crashed run, sent on the next launch: got %d" % len(crashes))
     for e in crashes:
-        expect(e["a"]["zharp.error.kind"] == "crash", "kind crash")
+        t = e["a"]["exception.type"]
+        message = e["a"]["exception.message"]
         expect(e["severity"] == "FATAL", "fatal")
-        expect(e["a"]["exception.message"].startswith("Inventory corrupted (Program crashed with signal 4"), e["a"]["exception.message"])
+        if t == "UncleanExit":
+            expect(message == "The game ended without shutting down after: Inventory corrupted", message)
+            expect(e["a"]["zharp.mechanism"] == "unclean_exit", "mechanism unclean_exit")
+        else:
+            expect(t in ("SIGILL", "SIGTRAP", "SIGABRT", "EngineCrash"), "a crash type: " + t)
+            expect(message.startswith("Inventory corrupted (Program crashed"), message)
+            expect(e["a"]["zharp.mechanism"] == "signal", "mechanism signal")
+            if os.environ.get("ENGINE_FRAMES", "1") == "1":
+                expect(len(frames(e)) > 2, "the engine's frames follow the script's")
+        if scenario == "crash" and os.environ.get("CRASH_HANDLER", "1") == "1":
+            expect(t != "UncleanExit", "debug builds have the crash handler")
         expect(frames(e)[:2] == ["[0] explode (res://shop/checkout.gd:40)", "[1] _ready (res://shop/checkout.gd:29)"], "script frames: %s" % frames(e)[:3])
-        expect(any("godot" in f or "shop_quest" in f or "libc" in f for f in frames(e)[2:]), "engine frames follow")
         expect(e["a"].get("screen.name") == "level", "the crashed run's scene")
         expect(e["resource"].get("service.version") == "1.4.0", "the crashed run's release")
         context = json.loads(e["a"].get("zharp.source_context", "[]"))

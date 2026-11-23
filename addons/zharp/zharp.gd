@@ -553,7 +553,7 @@ func _resolve(options: Dictionary) -> Dictionary:
 	if c.endpoint == "":
 		c.endpoint = DEFAULT_ENDPOINT
 	if c.service == "":
-		c.service = str(ProjectSettings.get_setting("application/config/name", ""))
+		c.service = service_name_for(str(ProjectSettings.get_setting("application/config/name", "")))
 	if c.service == "":
 		c.service = "godot-game"
 	if c.release == "":
@@ -561,6 +561,20 @@ func _resolve(options: Dictionary) -> Dictionary:
 	if c.environment == "" and OS.has_feature("editor"):
 		c.environment = "development"
 	return c
+
+
+## The service a game named "Shop Quest" reports as: "shop-quest", the name Zharp gives an app
+## created as "Shop Quest".
+static func service_name_for(name: String) -> String:
+	var out := ""
+	for c in name.to_lower().strip_edges():
+		if (c >= "a" and c <= "z") or (c >= "0" and c <= "9") or c == "." or c == "-":
+			out += c
+		elif c == " " or c == "_" or c == "\t":
+			out += "-"
+	while out.contains("--"):
+		out = out.replace("--", "-")
+	return out.trim_prefix("-").trim_suffix("-")
 
 
 static func _setting(name: String, fallback):
