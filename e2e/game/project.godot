@@ -17,6 +17,10 @@ file_logging/enable_file_logging=true
 [editor_plugins]
 enabled=PackedStringArray("res://addons/zharp/plugin.cfg")
 
+[rendering]
+
+textures/vram_compression/import_etc2_astc=true
+
 [zharp]
 key="zpk_e2e_test"
 endpoint="http://127.0.0.1:4318"
