@@ -1,0 +1,23 @@
+; The e2e game: run by e2e/run.sh with the addon copied into addons/zharp.
+config_version=5
+
+[application]
+config/name="Shop Quest"
+config/version="1.4.0"
+run/main_scene="res://main.tscn"
+config/features=PackedStringArray("4.5")
+
+[autoload]
+Zharp="*res://addons/zharp/zharp.gd"
+
+[debug]
+settings/gdscript/always_track_call_stacks=true
+file_logging/enable_file_logging=true
+
+[editor_plugins]
+enabled=PackedStringArray("res://addons/zharp/plugin.cfg")
+
+[zharp]
+key="zpk_e2e_test"
+endpoint="http://127.0.0.1:4318"
+environment="e2e"
