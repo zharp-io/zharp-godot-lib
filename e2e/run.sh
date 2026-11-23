@@ -21,10 +21,12 @@ FAILED=0
 cd $W/game
 timeout 120 godot --headless --import > $W/import.log 2>&1 || { echo "import failed"; tail -20 $W/import.log; exit 1; }
 
-# run <label> <binary> <mode> [env...]: one launch of the game.
+# run <label> <binary> <mode> [env...]: one launch of the game. An export runs from its own
+# folder: from the project's, files missing from its pack would be read from the project.
 run() {
   local label=$1 bin=$2 mode=$3; shift 3
-  env "$@" timeout 60 $bin --headless -- --mode=$mode > $W/$label.log 2>&1
+  local dir=$W/game; [ "$bin" = godot ] || dir=$(dirname $bin)
+  (cd $dir && env "$@" timeout 60 $bin --headless -- --mode=$mode > $W/$label.log 2>&1)
   echo "  ran $label ($mode): exit $?"
 }
 

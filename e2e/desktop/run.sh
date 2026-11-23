@@ -9,11 +9,14 @@ OUT=$E2E/out
 rm -rf "$OUT" "$E2E/game/addons" && mkdir -p "$OUT" && cp -r "$ROOT/addons" "$E2E/game/addons"
 echo '{"top":[1,2,3]}' > "$OUT/scores.json"
 python "$E2E/receiver.py" "$OUT" 4318 > "$OUT/receiver.log" 2>&1 &
+# The first Python launch on a fresh macOS runner can take over a minute: wait for the receiver.
 START=$SECONDS
-for i in $(seq 1 600); do curl -fsS -o /dev/null http://127.0.0.1:4318/scores.json 2>/dev/null && break; sleep 0.2; done
-echo "receiver: $(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:4318/scores.json) after $((SECONDS - START)) s"
+until curl -fsS -o /dev/null http://127.0.0.1:4318/scores.json 2>/dev/null; do
+  [ $((SECONDS - START)) -lt 300 ] || { echo "the receiver didn't start"; cat "$OUT/receiver.log"; exit 1; }
+  sleep 0.5
+done
+echo "receiver up after $((SECONDS - START)) s"
 rm -f "$OUT/requests.jsonl"
-export ZHARP_DEBUG=1
 case "$(uname -s)" in
   Darwin) USERDIR="$HOME/Library/Application Support/Godot/app_userdata/Shop Quest" ;;
   *)      USERDIR="$APPDATA/Godot/app_userdata/Shop Quest" ;;
@@ -23,7 +26,9 @@ cd "$E2E/game"
 "$GODOT_BIN" --headless --import > "$OUT/import.log" 2>&1
 
 run() { local label=$1 bin=$2 mode=$3; "$bin" --headless --path "$E2E/game" -- --mode=$mode > "$OUT/$label.log" 2>&1; echo "  ran $label: exit $?"; }
-release() { local label=$1 bin=$2 mode=$3; "$bin" --headless -- --mode=$mode > "$OUT/$label.log" 2>&1; echo "  ran $label: exit $?"; }
+# An export runs from its own folder: from the project's, files missing from its pack would be
+# read from the project.
+release() { local label=$1 bin=$2 mode=$3; (cd "$OUT/build" && "$bin" --headless -- --mode=$mode > "$OUT/$label.log" 2>&1); echo "  ran $label: exit $?"; }
 check() {
   touch "$OUT/received.jsonl" "$OUT/requests.jsonl"
   mv "$OUT/received.jsonl" "$OUT/$1.jsonl"; mv "$OUT/requests.jsonl" "$OUT/$1.requests.jsonl"
